@@ -31,7 +31,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run() {
-  try{
+  try {
     const Users = client.db('CameraCrew').collection('users');
 
     app.put('/user/:email', async (req, res) => {
@@ -47,10 +47,16 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: '40d',
       })
-      res.send({result, token})
+      res.send({ result, token })
+    })
+    app.get('/user/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await Users.findOne(query);
+      res.send(user)
     })
   }
-  finally{
+  finally {
 
   }
 }
