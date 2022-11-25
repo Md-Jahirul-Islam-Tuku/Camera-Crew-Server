@@ -103,6 +103,21 @@ async function run() {
       const result = await Products.deleteOne(query);
       res.send(result);
     })
+    // temporary start
+    app.get('/addProductsInfo', async (req, res) => {
+      const filter = {}
+      const options = { upsert: true }
+      const updatedDoc = {
+        $set: {
+          mobile: "0171122334455",
+          condition: "Good",
+          description: "This is Good product for you. I'm looking a DSLR camera so I sale this."
+        }
+      }
+      const result = await Products.updateMany(filter, updatedDoc, options);
+      res.send(result);
+    })
+    // temporary end
   }
   finally {
 
