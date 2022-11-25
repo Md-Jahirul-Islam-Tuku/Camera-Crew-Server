@@ -34,6 +34,7 @@ async function run() {
   try {
     const Users = client.db('CameraCrew').collection('users');
     const Products = client.db('CameraCrew').collection('products');
+    const Categories = client.db('CameraCrew').collection('categories');
 
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email
@@ -62,9 +63,21 @@ async function run() {
       const products = await Products.find(query).toArray();
       res.send(products)
     })
-    app.get('/featuredProducts', async (req, res) => {
+
+    app.get('/categoryProducts/:category', async (req, res) => {
+      const category = req.params.category;
+      const query = { category };
+      const products = await Products.find(query).toArray();
+      res.send(products)
+    })
+    app.get('/advertisementProducts', async (req, res) => {
       const query = { advertisement: true };
       const products = await Products.find(query).toArray();
+      res.send(products)
+    })
+    app.get('/categories', async (req, res) => {
+      const query = {};
+      const products = await Categories.find(query).toArray();
       res.send(products)
     })
     app.put('/products/:id', verifyJWT, async (req, res) => {
@@ -80,17 +93,11 @@ async function run() {
       res.send(result)
     })
     app.post('/products', verifyJWT, async (req, res) => {
-      const product = req.body
-      console.log(product)
+      const product = req.body;
       const result = await Products.insertOne(product)
       res.send(result)
     })
-    app.delete('/products/:id', verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await Products.deleteOne(query);
-      res.send(result);
-    })
+
   }
   finally {
 
