@@ -62,6 +62,11 @@ async function run() {
       const products = await Products.find(query).toArray();
       res.send(products)
     })
+    app.get('/featuredProducts', async (req, res) => {
+      const query = { advertisement: true };
+      const products = await Products.find(query).toArray();
+      res.send(products)
+    })
     app.put('/products/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) }
