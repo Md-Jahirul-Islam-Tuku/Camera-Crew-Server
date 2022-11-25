@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -62,11 +62,29 @@ async function run() {
       const products = await Products.find(query).toArray();
       res.send(products)
     })
+    app.put('/products/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          advertisement: true
+        }
+      }
+      const result = await Products.updateOne(filter, updateDoc, options)
+      res.send(result)
+    })
     app.post('/products', verifyJWT, async (req, res) => {
       const product = req.body
       console.log(product)
       const result = await Products.insertOne(product)
       res.send(result)
+    })
+    app.delete('/products/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await Products.deleteOne(query);
+      res.send(result);
     })
   }
   finally {
