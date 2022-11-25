@@ -57,6 +57,12 @@ async function run() {
       const user = await Users.findOne(query);
       res.send(user)
     })
+    app.get('/users', async (req, res) => {
+      const role = req.query.role;
+      const query = { role };
+      const user = await Users.find(query).toArray();
+      res.send(user)
+    })
     app.get('/products/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -92,6 +98,30 @@ async function run() {
       const result = await Products.updateOne(filter, updateDoc, options)
       res.send(result)
     })
+    app.put('/seller/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          badge: true
+        }
+      }
+      const result = await Users.updateOne(filter, updateDoc, options)
+      res.send(result)
+    })
+    app.put('/value/:email', async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email }
+      const options = { upsert: true }
+      const updatedDoc = {
+        $set: {
+          badge: true
+        }
+      }
+      const result = await Products.updateMany(filter, updatedDoc, options);
+      res.send(result);
+    })
     app.post('/products', verifyJWT, async (req, res) => {
       const product = req.body;
       const result = await Products.insertOne(product)
@@ -103,21 +133,6 @@ async function run() {
       const result = await Products.deleteOne(query);
       res.send(result);
     })
-    // temporary start
-    app.get('/addProductsInfo', async (req, res) => {
-      const filter = {}
-      const options = { upsert: true }
-      const updatedDoc = {
-        $set: {
-          mobile: "0171122334455",
-          condition: "Good",
-          description: "This is Good product for you. I'm looking a DSLR camera so I sale this."
-        }
-      }
-      const result = await Products.updateMany(filter, updatedDoc, options);
-      res.send(result);
-    })
-    // temporary end
   }
   finally {
 
