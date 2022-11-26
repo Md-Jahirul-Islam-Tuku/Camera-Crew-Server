@@ -34,6 +34,7 @@ async function run() {
     const Users = client.db('CameraCrew').collection('users');
     const Products = client.db('CameraCrew').collection('products');
     const Categories = client.db('CameraCrew').collection('categories');
+    const Bookings = client.db('CameraCrew').collection('bookings');
 
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email
@@ -53,8 +54,8 @@ async function run() {
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email };
-      const user = await Users.findOne(query);
-      res.send(user)
+      const result = await Users.findOne(query);
+      res.send(result)
     })
     app.get('/users', async (req, res) => {
       const role = req.query.role;
@@ -125,7 +126,17 @@ async function run() {
       }
       const result = await Users.updateOne(filter, updateDoc, options)
       const value = await Products.updateMany(query, updateDoc, options);
-      res.send({result, value})
+      res.send({ result, value })
+    })
+    app.post('/booking', async (req, res) => {
+      const booking = req.body;
+      const result = await Bookings.insertOne(booking);
+      res.send(result);
+    })
+    app.get('/booking', async(req, res)=>{
+      const query = {}
+      const orders = await Bookings.find(query).toArray();
+      res.send(orders);
     })
     app.post('/products', verifyJWT, async (req, res) => {
       const product = req.body;
