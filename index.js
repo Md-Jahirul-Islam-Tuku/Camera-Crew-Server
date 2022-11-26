@@ -21,9 +21,8 @@ function verifyJWT(req, res, next) {
     if (err) {
       return res.status(403).send({ message: 'Forbidden access' })
     }
-    console.log(decoded)
-    req.decoded = decoded
-    next()
+    req.decoded = decoded;
+    next();
   })
 }
 
@@ -51,7 +50,7 @@ async function run() {
       })
       res.send({ result, token })
     })
-    app.get('/user/:email', async (req, res) => {
+    app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await Users.findOne(query);
@@ -98,29 +97,35 @@ async function run() {
       const result = await Products.updateOne(filter, updateDoc, options)
       res.send(result)
     })
-    app.put('/seller/:id', verifyJWT, async (req, res) => {
+    app.put('/productReport/:id', async (req, res) => {
       const id = req.params.id;
+      const email = req.body?.email;
       const filter = { _id: ObjectId(id) }
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          badge: true
+          report: true,
+          reportEmail: email
+        }
+      }
+      const result = await Products.updateOne(filter, updateDoc, options)
+      res.send(result)
+    })
+    app.put('/seller/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const verification = req.body.changeText;
+      const email = req.body.email;
+      const filter = { _id: ObjectId(id) }
+      const query = { email: email }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          badge: verification
         }
       }
       const result = await Users.updateOne(filter, updateDoc, options)
-      res.send(result)
-    })
-    app.put('/value/:email', async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email }
-      const options = { upsert: true }
-      const updatedDoc = {
-        $set: {
-          badge: true
-        }
-      }
-      const result = await Products.updateMany(filter, updatedDoc, options);
-      res.send(result);
+      const value = await Products.updateMany(query, updateDoc, options);
+      res.send({result, value})
     })
     app.post('/products', verifyJWT, async (req, res) => {
       const product = req.body;
