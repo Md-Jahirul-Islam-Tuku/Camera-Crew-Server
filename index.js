@@ -5,6 +5,7 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")('sk_test_51M6vipFIcZQlcbQaxqmHdDOc9n0FmeyIWY9HXnPPrPX1DqUDyZ4ag0Hhc81CGMIdc93xFHKvgyOPKaunwpuFEyQ800BFd4s0zi');
 
 app.use(cors());
 app.use(express.json());
@@ -36,6 +37,7 @@ async function run() {
     const Categories = client.db('CameraCrew').collection('categories');
     const Bookings = client.db('CameraCrew').collection('bookings');
     const Reports = client.db('CameraCrew').collection('reports');
+    const Payments = client.db('CameraCrew').collection('payments');
 
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email
@@ -52,6 +54,37 @@ async function run() {
       })
       res.send({ result, token })
     })
+
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const booking = req.body;
+    //   const price = booking.price;
+    //   const amount = price * 100;
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount,
+    //     currency: "usd",
+    //     "payment_method_types": [
+    //       "card"
+    //     ],
+    //   });
+    //   res.send({
+    //     clientSecret: paymentIntent.client_secret,
+    //   });
+    // });
+
+    // app.post('/payments', async (req, res) => {
+    //   const payment = req.body;
+    //   const result = await Payments.insertOne(payment);
+    //   const id = payment.bookingId;
+    //   const filter = { _id: ObjectId(id) };
+    //   const updatedDoc = {
+    //     $set: {
+    //       paid: true,
+    //       transactionId: payment.transactionId
+    //     }
+    //   }
+    //   const updateBooking = await Bookings.updateOne(filter, updatedDoc)
+    //   res.send(result);
+    // })
 
     app.get('/reports', async (req, res) => {
       const query = {}
@@ -86,23 +119,15 @@ async function run() {
       const products = await Products.find(query).toArray();
       res.send(products)
     })
-    app.get('/myOrders/:email',verifyJWT, async (req, res) => {
+
+    app.get('/myOrders/:email', verifyJWT, async (req, res) => {
       const userEmail = req.params.email;
       const query = { userEmail };
-      const products = await Products.find({}).toArray();
       const bookings = await Bookings.find(query).toArray();
-      const filterByReference = (arr1, arr2) => {
-        let res = [];
-        res = arr1.filter(el => {
-          return arr2.find(element => {
-            return element.productId == el._id;
-          });
-        });
-        return res;
-      }
-      const result = filterByReference(products, bookings)
-      res.send(result)
+      res.send(bookings)
     })
+
+
     app.get('/categories', async (req, res) => {
       const query = {};
       const products = await Categories.find(query).toArray();
@@ -119,6 +144,12 @@ async function run() {
       }
       const result = await Products.updateOne(filter, updateDoc, options)
       res.send(result)
+    })
+    app.get('/dashboard/payment/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await Bookings.findOne(query);
+      res.send(product);
     })
     app.post('/reportProduct', async (req, res) => {
       const report = req.body;
