@@ -55,36 +55,36 @@ async function run() {
       res.send({ result, token })
     })
 
-    // app.post("/create-payment-intent", async (req, res) => {
-    //   const booking = req.body;
-    //   const price = booking.price;
-    //   const amount = price * 100;
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount,
-    //     currency: "usd",
-    //     "payment_method_types": [
-    //       "card"
-    //     ],
-    //   });
-    //   res.send({
-    //     clientSecret: paymentIntent.client_secret,
-    //   });
-    // });
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: "usd",
+        "payment_method_types": [
+          "card"
+        ],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
-    // app.post('/payments', async (req, res) => {
-    //   const payment = req.body;
-    //   const result = await Payments.insertOne(payment);
-    //   const id = payment.bookingId;
-    //   const filter = { _id: ObjectId(id) };
-    //   const updatedDoc = {
-    //     $set: {
-    //       paid: true,
-    //       transactionId: payment.transactionId
-    //     }
-    //   }
-    //   const updateBooking = await Bookings.updateOne(filter, updatedDoc)
-    //   res.send(result);
-    // })
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
+      const result = await Payments.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId
+        }
+      }
+      const updateBooking = await Bookings.updateOne(filter, updatedDoc)
+      res.send(result);
+    })
 
     app.get('/reports', async (req, res) => {
       const query = {}
