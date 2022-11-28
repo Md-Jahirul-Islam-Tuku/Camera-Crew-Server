@@ -35,6 +35,7 @@ async function run() {
     const Products = client.db('CameraCrew').collection('products');
     const Categories = client.db('CameraCrew').collection('categories');
     const Bookings = client.db('CameraCrew').collection('bookings');
+    const Reports = client.db('CameraCrew').collection('reports');
 
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email
@@ -51,9 +52,20 @@ async function run() {
       })
       res.send({ result, token })
     })
+
+    app.get('/reports', async (req, res) => {
+      const query = {}
+      const reports = await Reports.find(query).toArray();
+      res.send(reports);
+    })
+    app.get('/booking', async (req, res) => {
+      const query = {}
+      const bookings = await Bookings.find(query).toArray();
+      res.send(bookings);
+    })
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
-      const query = { email };
+      const query = { email: email };
       const result = await Users.findOne(query);
       res.send(result)
     })
@@ -63,13 +75,6 @@ async function run() {
       const user = await Users.find(query).toArray();
       res.send(user)
     })
-    app.get('/products/:email', async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const products = await Products.find(query).toArray();
-      res.send(products)
-    })
-
     app.get('/categoryProducts/:category', async (req, res) => {
       const category = req.params.category;
       const query = { category };
@@ -80,6 +85,23 @@ async function run() {
       const query = { advertisement: true };
       const products = await Products.find(query).toArray();
       res.send(products)
+    })
+    app.get('/myOrders/:email',verifyJWT, async (req, res) => {
+      const userEmail = req.params.email;
+      const query = { userEmail };
+      const products = await Products.find({}).toArray();
+      const bookings = await Bookings.find(query).toArray();
+      const filterByReference = (arr1, arr2) => {
+        let res = [];
+        res = arr1.filter(el => {
+          return arr2.find(element => {
+            return element.productId == el._id;
+          });
+        });
+        return res;
+      }
+      const result = filterByReference(products, bookings)
+      res.send(result)
     })
     app.get('/categories', async (req, res) => {
       const query = {};
@@ -98,19 +120,10 @@ async function run() {
       const result = await Products.updateOne(filter, updateDoc, options)
       res.send(result)
     })
-    app.put('/productReport/:id', async (req, res) => {
-      const id = req.params.id;
-      const email = req.body?.email;
-      const filter = { _id: ObjectId(id) }
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          report: true,
-          reportEmail: email
-        }
-      }
-      const result = await Products.updateOne(filter, updateDoc, options)
-      res.send(result)
+    app.post('/reportProduct', async (req, res) => {
+      const report = req.body;
+      const result = await Reports.insertOne(report);
+      res.send(result);
     })
     app.put('/seller/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
@@ -128,15 +141,25 @@ async function run() {
       const value = await Products.updateMany(query, updateDoc, options);
       res.send({ result, value })
     })
+    app.delete('/seller/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const email = req.body.email;
+      const filter = { _id: ObjectId(id) }
+      const query = { email: email }
+      const result = await Users.deleteOne(filter)
+      const value = await Products.deleteMany(query);
+      res.send({ result, value })
+    })
+    app.get('/products/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const products = await Products.find(query).toArray();
+      res.send(products)
+    })
     app.post('/booking', async (req, res) => {
       const booking = req.body;
       const result = await Bookings.insertOne(booking);
       res.send(result);
-    })
-    app.get('/booking', async(req, res)=>{
-      const query = {}
-      const orders = await Bookings.find(query).toArray();
-      res.send(orders);
     })
     app.post('/products', verifyJWT, async (req, res) => {
       const product = req.body;
@@ -146,7 +169,15 @@ async function run() {
     app.delete('/products/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
+      const filter = { productId: id }
       const result = await Products.deleteOne(query);
+      const value = await Reports.deleteMany(filter)
+      res.send(result);
+    })
+    app.delete('/bookings/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { productId: id };
+      const result = await Bookings.deleteOne(query);
       res.send(result);
     })
   }
